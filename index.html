@@ -47,6 +47,17 @@ var childrenFrequency = [
     [865, 8]
 ];
 
+var homozygousDominantChildrenFrequency = [
+    [14957 * 0.95, 0],
+    [8803 * 0.95, 1],
+    [13489, 2],
+    [4487 * 1.05, 3],
+    [2088 * 1.05, 4],
+    [1064 * 1.05, 5],
+    [602 * 1.05, 6],
+    [865 * 1.05, 8]
+];
+
 var makeCumulative = function (histogram) {
     var cumulative = [];
     var currentSum = 0;
@@ -84,10 +95,9 @@ unitTest(function testSimpleHistogram() {
     }
     for (var key in counter) {
         if (counter[key] < scale*0.85) {
-            return false;
+            throw new Error();
         }
     }
-    return true
 });
 
 var reproduceCouple = function(humanA, humanB) {
@@ -105,6 +115,76 @@ var reproduceCouple = function(humanA, humanB) {
     return children;
 };
 
+console.log(reproduceCouple(createHuman([true, false], true), createHuman([false, true], false)));
+
+var pairPopulation = function() {
+    
+}
+
+var setHumanTo = function(human, matrix) {
+    matrix[0][0] = human[0][0];
+    matrix[0][1] = human[0][1];
+    matrix[1] = human[1];
+    return matrix;
+}
+
+var swapRandomAndLast = function(population, gender) {
+    var randomIndex = Math.floor(Math.random() *
+                      population[gender].length);
+    var lastIndex = population[gender].length - 1;
+    var intermediate = setHumanTo(population[gender][randomIndex],
+                       createHuman([false, false], false));
+    setHumanTo(population[gender][randomIndex],
+               population[gender][lastIndex]);
+    setHumanTo(population[gender][lastIndex],
+               itermediate);
+}
+
+unitTest(function testSwapRandomAndLast(){
+    var scale = 4000;
+    var createIndividuals = function(){
+        return {"males":
+          [
+            [[false, false], false],
+            [[false, true], false],
+            [[true, false], false],
+            [[true, true], false],
+          ],
+         "females":[]
+        };
+    }
+    var firstToLast = 0;
+    var secondToLast = 0;
+    var thirdToLast = 0;
+    var lastToLast = 0;
+    var checkIfFirstToLast = function(individuals){
+        var last = individuals.males[3][0];
+        var first = individuals.males[3][0];
+        var second = individuals.males[3][0];
+        var last = individuals.males[3][0];
+        if(last[0] === false && last[1] === false) {
+            if(second[0] !== false ||
+               second[1] !== true ||
+               third[0] !== true ||
+               third[1] !== false ||
+               first[0] !== true ||
+               first[1] !== true
+            ) throw new Error();
+            firstToLast += 1;
+        }
+    }
+    for(var i = 0; i < scale; i++) {
+        var individuals = createIndividuals();
+        swapRandomAndLast(individuals, "males")
+        checkIfFirstToLast(individuals);
+    }
+});
+
+
+var matePopulation = function(population) {
+    
+}
+
 unitTest(function testGeneDistribution() {
     var scale = 2000;
     var children = [];
@@ -114,19 +194,18 @@ unitTest(function testGeneDistribution() {
         children.push.apply(children, newChildren);
     }
     totalChildren = children.length;
-    console.log(totalChildren)
     var heterozygous = 0;
     var homozygousDominant = 0;
     var homozygousRecessive = 0;
     
-    for (var child in children){
-        if (isHomozygousDominant(children[child])){
+    for (var child in children) {
+        if (isHomozygousDominant(children[child])) {
             homozygousDominant += 1;
         }
-        if (isHeterozygous(children[child])){
+        if (isHeterozygous(children[child])) {
             heterozygous += 1;
         }
-        if (isHomozygousRecessive(children[child])){
+        if (isHomozygousRecessive(children[child])) {
             homozygousRecessive += 1;
         }
     }
@@ -206,7 +285,7 @@ unitTest(function testLargePopulation(){
 });
 
 var executeUnitTests = function() {
-    if (DEBUG === true){
+    if (DEBUG === true) {
         var start = new Date();
         for (var i = 0; i < unitTests.length; i++) {
             try {
@@ -216,7 +295,6 @@ var executeUnitTests = function() {
                 console.warn("unit test failed for: ", unitTests[i])
                 throw exception;
             }
-            //console.log("unit test no", i, "passed for: ", unitTests[i]);
         }
         var stop = new Date();
         console.warn("unit tests passed in", stop - start, "ms");
