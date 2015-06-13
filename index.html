@@ -100,7 +100,7 @@ unitTest(function testSimpleHistogram() {
     }
 });
 
-var reproduceCouple = function(humanA, humanB) {
+var reproduceCouple = function(humanA, humanB, histogram) {
     var children = [];
     if (humanA.isFemale === humanB.isFemale) {
         console.warn("can't do gay yet");
@@ -115,29 +115,27 @@ var reproduceCouple = function(humanA, humanB) {
     return children;
 };
 
-console.log(reproduceCouple(createHuman([true, false], true), createHuman([false, true], false)));
-
-var pairPopulation = function() {
-    
-}
-
 var setHumanTo = function(human, matrix) {
-    matrix[0][0] = human[0][0];
-    matrix[0][1] = human[0][1];
-    matrix[1] = human[1];
+    matrix["hasGene"][0] = human["hasGene"][0];
+    matrix["hasGene"][1] = human["hasGene"][1];
+    matrix["isFemale"] = human["isFemale"];
     return matrix;
 }
 
 var swapRandomAndLast = function(population, gender) {
+    if (population[gender].length === 0) {
+        return []
+    }
     var randomIndex = Math.floor(Math.random() *
                       population[gender].length);
     var lastIndex = population[gender].length - 1;
-    var intermediate = setHumanTo(population[gender][randomIndex],
+    var intermediate = setHumanTo(population[gender][lastIndex],
                        createHuman([false, false], false));
     setHumanTo(population[gender][randomIndex],
                population[gender][lastIndex]);
-    setHumanTo(population[gender][lastIndex],
-               itermediate);
+    setHumanTo(intermediate,
+               population[gender][randomIndex]);
+    return population;
 }
 
 unitTest(function testSwapRandomAndLast(){
@@ -145,10 +143,10 @@ unitTest(function testSwapRandomAndLast(){
     var createIndividuals = function(){
         return {"males":
           [
-            [[false, false], false],
-            [[false, true], false],
-            [[true, false], false],
-            [[true, true], false],
+            createHuman([false, false], false),
+            createHuman([false, true], false),
+            createHuman([true, false], false),
+            createHuman([true, true], false),
           ],
          "females":[]
         };
@@ -158,10 +156,10 @@ unitTest(function testSwapRandomAndLast(){
     var thirdToLast = 0;
     var lastToLast = 0;
     var checkIfFirstToLast = function(individuals){
-        var last = individuals.males[3][0];
-        var first = individuals.males[3][0];
-        var second = individuals.males[3][0];
-        var last = individuals.males[3][0];
+        var first = individuals.males[0]["hasGene"];
+        var second = individuals.males[1]["hasGene"];
+        var third = individuals.males[2]["hasGene"];
+        var last = individuals.males[3]["hasGene"];
         if(last[0] === false && last[1] === false) {
             if(second[0] !== false ||
                second[1] !== true ||
@@ -182,8 +180,24 @@ unitTest(function testSwapRandomAndLast(){
 
 
 var matePopulation = function(population) {
-    
+    var secondGeneration = createPopulation(0);
+    while (population.males.length > 0 && population.females.length > 0 ){
+        swapRandomAndLast(population, "males");
+        swapRandomAndLast(population, "females");
+        var children = reproduceCouple(population.males.pop(),
+                                       population.females.pop());
+        for (var index in children){
+            pushHuman(children[index], secondGeneration);
+        }
+    }
+    console.log(secondGeneration)
 }
+
+unitTest(function testMatePopulation() {
+    var population = createPopulation(10000);
+    var secondGeneration = matePopulation(population);
+    return secondGeneration;
+});
 
 unitTest(function testGeneDistribution() {
     var scale = 2000;
@@ -236,6 +250,7 @@ var humanIterator = function(population, callback){
 
 var createPopulation = function(size) {
     var population = {"males":[], "females":[]};
+    if (size === 0) return population;
     for(var i = 0; i < size - 1; i++) {
         nextHuman = createHuman([false, false], isFemale());
         pushHuman(nextHuman, population);
@@ -288,7 +303,7 @@ var executeUnitTests = function() {
     if (DEBUG === true) {
         var start = new Date();
         for (var i = 0; i < unitTests.length; i++) {
-            try {
+           try {
                 unitTests[i]()
             }
             catch (exception) {
