@@ -100,7 +100,13 @@ unitTest(function testSimpleHistogram() {
     }
 });
 
-var reproduceCouple = function(humanA, humanB, histogram) {
+var defaultHistograms = {
+  "homozygousRecessive":,
+  "homozygousDominant":,
+  "heterozygous": 
+}
+
+var reproduceCouple = function(humanA, humanB, histograms) {
     var children = [];
     if (humanA.isFemale === humanB.isFemale) {
         console.warn("can't do gay yet");
