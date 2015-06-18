@@ -47,7 +47,7 @@ var childrenFrequency = [
     [865, 8]
 ];
 
-var homozygousDominantChildrenFrequency = [
+var mediumChildrenFrequency = [
     [14957 * 0.95, 0],
     [8803 * 0.95, 1],
     [13489, 2],
@@ -56,6 +56,17 @@ var homozygousDominantChildrenFrequency = [
     [1064 * 1.05, 5],
     [602 * 1.05, 6],
     [865 * 1.05, 8]
+];
+
+var highChildrenFrequency = [
+    [14957 * 0.9, 0],
+    [8803 * 0.9, 1],
+    [13489, 2],
+    [4487 * 1.1, 3],
+    [2088 * 1.1, 4],
+    [1064 * 1.1, 5],
+    [602 * 1.1, 6],
+    [865 * 1.1, 8]
 ];
 
 var makeCumulative = function (histogram) {
@@ -101,12 +112,18 @@ unitTest(function testSimpleHistogram() {
 });
 
 var defaultHistograms = {
-  "homozygousRecessive":,
-  "homozygousDominant":,
-  "heterozygous": 
+  "homozygousRecessive": createRandomFromHistogram(childrenFrequency),
+  "heterozygous": createRandomFromHistogram(mediumChildrenFrequency),
+  "homozygousDominant": createRandomFromHistogram(highChildrenFrequency)
 }
 
-var reproduceCouple = function(humanA, humanB, histograms) {
+var uniformHistograms = {
+  "homozygousRecessive": createRandomFromHistogram(childrenFrequency),
+  "heterozygous": createRandomFromHistogram(mediumChildrenFrequency),
+  "homozygousDominant": createRandomFromHistogram(highChildrenFrequency)
+}
+
+var reproduceCouple = function(humanA, humanB, drawFromHistograms) {
     var children = [];
     if (humanA.isFemale === humanB.isFemale) {
         console.warn("can't do gay yet");
@@ -185,13 +202,13 @@ unitTest(function testSwapRandomAndLast(){
 });
 
 
-var matePopulation = function(population) {
+var matePopulation = function(population, histograms) {
     var secondGeneration = createPopulation(0);
     while (population.males.length > 0 && population.females.length > 0 ){
         swapRandomAndLast(population, "males");
         swapRandomAndLast(population, "females");
         var children = reproduceCouple(population.males.pop(),
-                                       population.females.pop());
+                                       population.females.pop(), histograms);
         for (var index in children){
             pushHuman(children[index], secondGeneration);
         }
@@ -208,9 +225,10 @@ unitTest(function testMatePopulation() {
 unitTest(function testGeneDistribution() {
     var scale = 2000;
     var children = [];
+    var histograms = uniformHistograms;
     for(var i = 0; i <= scale; i++){
         var newChildren = reproduceCouple(createHuman([true, false], true),
-                                          createHuman([false, true], false));
+                                          createHuman([false, true], false), histograms);
         children.push.apply(children, newChildren);
     }
     totalChildren = children.length;
@@ -326,9 +344,49 @@ if (DEBUG === true){
     console.warn("debug is enabled");
 }
 executeUnitTests();
+
+var runAnimation = function() {
+    var canvas = document.getElementById("canvas-screen");
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "red";
+    ctx.fillRect(0, 0, 300, 200);
+    var circle = new Path2D();
+    circle.arc(60, 0, 30, 0, Math.PI*2, true);
+    ctx.fillStyle = "green";
+    ctx.fill(circle);
+    ctx.fillStyle = "black";
+    ctx.font = "30px sans";
+    ctx.fillText("Adam", 15, 30);
+}
+
+window.onload = runAnimation
     </script>
   </head>
   <body>
-    <p id="screen"> </p>
+    <table>
+      <tr>
+        <td>
+        <svg version="1.1"
+             baseProfile="full"
+             width="300" height="200"
+             xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="red" />
+
+          <circle cx="60" cy="0" r="30" fill="green" />
+          <circle cx="60" cy="0" r="30" fill="green" />
+          <text x="60" y="30"
+                font-size="30"
+                font-family="sans"
+                text-anchor="middle" fill="black">
+                Adam
+          </text>
+        </svg>
+        </td>
+        <td>
+        <canvas id="canvas-screen" width="300" height="200">
+        </canvas>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>
